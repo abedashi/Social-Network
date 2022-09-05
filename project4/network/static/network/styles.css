@@ -1,0 +1,24 @@
+.body {
+    padding: 15px;
+}
+#heart-icon {
+    color: rgb(147, 146, 146);
+}
+#heart-icon:hover {
+    color: rgb(234, 53, 36);
+    cursor: pointer;
+}
+#three-dot {
+    cursor: pointer;
+}
+a {
+    color: rgb(147, 146, 146);;
+}
+a:hover {
+    text-decoration: none;
+    color: black;
+}
+img {
+    border: 10px solid white;
+    border-radius: 50%;
+}
