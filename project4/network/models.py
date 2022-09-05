@@ -1,4 +1,4 @@
-from django.utils import timezone
+from datetime import datetime
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
@@ -7,7 +7,8 @@ class User(AbstractUser):
     number_of_post = models.IntegerField(default=0)
     number_of_followers = models.IntegerField(default=0)
     number_of_following = models.IntegerField(default=0)
-    image = models.ImageField(null=True, blank=True)
+    # backgroundColor = models.TextField(default="rgb(203, 68, 74)")
+    # image = models.ImageField(null=True, default="/images/profile.png", upload_to="/images")
 
 class Follows(models.Model):
     follower = models.ForeignKey(User, on_delete=models.CASCADE, null=True, related_name="follower")
@@ -19,8 +20,9 @@ class Follows(models.Model):
 class Posts(models.Model):
     userID = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
     post = models.CharField(max_length=1000)
-    datetime = models.DateTimeField(default=timezone.now)
+    datetime = models.DateTimeField(default=datetime.now())
     likes = models.IntegerField(default=0)
+    followID = models.ForeignKey(Follows, on_delete=models.CASCADE, null=True)
 
     def __str__(self):
         return f"({self.userID}, {self.post}, {self.datetime})"
