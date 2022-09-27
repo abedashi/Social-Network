@@ -19,71 +19,97 @@
                     <h4>{{ user.username }}</h4>
                 </div>
 
-                <div style="border-bottom: 1px solid rgb(223, 226, 230);">
+                <div>
                     <ul class="nav nav-tabs">
-                        <li class="nav-item">
-                            <a id="about-btn" type="button" class="nav-link active" role="tab"
-                                aria-current="page">About</a>
-                        </li>
                         <li class="nav-item">
                             <a id="my-post-btn" type="button" class="nav-link active" role="tab"
                                 aria-current="page">Post</a>
                         </li>
+                        <li class="nav-item">
+                            <a id="about-btn" type="button" class="nav-link" role="tab"
+                                aria-current="page">About</a>
+                        </li>
                     </ul>
                 </div>
 
-                <div id="my-post" style="display: none;">
-                    {% if not myPost %}
+                <div id="my-post">
+                    {% if not page_obj %}
                     <div class="text-center mt-3">
                         No Posts Yet!
                     </div>
                     {% endif %}
-                    {% for post in myPost %}
-                    <div class="container-fluid border mt-2">
+                    {% for post in page_obj %}
+                    <div class="container-fluid border mt-2" data-id="{{ post.id }}">
                         <div class="row pt-3">
                             <div class="col">
                                 <div class="d-flex align-items-center justify-content-between">
                                     <div>
                                         <a href="#">
-                                            <h5>{{ post.userID }}</h5>
+                                            <h5>{{ post.user }}</h5>
                                         </a>
                                     </div>
                                     <div style="color: rgb(147, 146, 146);">
                                         {{ post.datetime }}
                                     </div>
                                 </div>
-                                <p>{{ post.post }}</p>
+                                <p>{{ post.text }}</p>
 
                                 <hr />
                                 <div class="d-flex align-items-center justify-content-center mb-2">
-                                    <span><i id="heart-icon" class="bi bi-heart"></i></span>
-                                    <span class="m-1">{{ post.likes }}</span>
+                                    <span>
+                                        {% if not post.is_liked %}
+                                            <i id="heart-icon" data-action="like" class="bi bi-heart"></i>
+                                        {% else %}
+                                            <i id="heart-icon" data-action="unlike" class="bi bi-heart-fill text-danger"></i>
+                                        {% endif %}
+                                    </span>
+                                    <div style="padding-left: 3px;">{{post.postLiked.count}}</div>
                                     <a style="margin-left: 55px;" href="#">Comment</a>
-                                    <a style="margin-left: 55px;" href="#">Edit</a>
+                                    <a style="margin-left: 55px;" type="button" data-bs-toggle="modal" data-bs-target="#exampleModal">Edit</a>
+
+                                    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                          <div class="modal-content">
+                                            <div class="modal-header">
+                                              <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+                                              <!-- <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button> -->
+                                            </div>
+                                            <div class="modal-body">
+                                              <textarea class="form-control" rows="5"></textarea>
+                                            </div>
+                                            <div class="modal-footer">
+                                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                              <button type="button" class="btn btn-primary">Save changes</button>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     {% endfor %}
-                    <hr />
-                    <div class="mt-3">
-                        <nav aria-label="Page navigation example">
-                            <ul class="pagination justify-content-center">
-                                <li class="page-item">
-                                    <a class="page-link" tabindex="-1" aria-disabled="true">Previous</a>
-                                </li>
-                                <li class="page-item"><a class="page-link">1</a></li>
-                                <li class="page-item"><a class="page-link">2</a></li>
-                                <li class="page-item"><a class="page-link">3</a></li>
-                                <li class="page-item">
-                                    <!-- <a class="page-link">Next</a> -->
-                                    <a class="page-link" tabindex="+1" aria-disabled="true">Next</a>
-                                </li>
-                            </ul>
-                        </nav>
+                    <!-- <hr /> -->
+                    <div class="pagination container">
+                        <hr />
+                        <span class="step-links">
+                            {% if page_obj.has_previous %}
+                            <a href="?page=1">&laquo; first</a>
+                            <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                            {% endif %}
+
+                            <span class="current">
+                                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                            </span>
+
+                            {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}">next</a>
+                            <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                            {% endif %}
+                        </span>
                     </div>
                 </div>
-                <div id="about" class="p-4" style="display: none;">
+                <div id="about" class="p-4" hidden>
                     <div class="d-flex align-items-center justify-content-between">
                         <div class="d-flex aligin-items-center" style="gap: 15px;">
                             <span><strong>Folowers:</strong> 514</span> <span><strong>Following:</strong> 212</span>
@@ -104,15 +130,19 @@
                                         <h5 class="modal-title" id="staticBackdropLabel">Profile Edit</h5>
                                     </div>
                                     <div class="modal-body">
-                                        <form method="post">
+                                        <form id="edit" method="post">
                                             {% csrf_token %}
                                             <div class="mb-3">
-                                                <input type="text" name="email" class="form-control" autocomplete="off"
-                                                    placeholder="Email">
+                                                <input id="email" type="text" name="email" class="form-control"
+                                                    autocomplete="off" placeholder="email@address.com">
+                                                <div id="email-feedback" class="valid-feedback">
+                                                </div>
                                             </div>
                                             <div class="d-flex align-items-center justify-content-between">
                                                 <div class="mb-3">
-                                                    <input type="file" name="image">
+                                                    <input id="file" type="file" name="image">
+                                                    <div id="file-feedback">
+                                                    </div>
                                                 </div>
                                                 <div class="mb-3">
                                                     <input type="color">
@@ -121,15 +151,17 @@
                                             <div class="form-floating">
                                                 <textarea class="form-control" placeholder="Bio" id="floatingTextarea"
                                                     rows="5"></textarea>
+                                                <div id="textarea-feedback">
+                                                </div>
                                             </div>
                                     </div>
                                     <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary"
+                                        <input type="button" id="reset" class="btn btn-secondary" value="Reset">
+                                        <button id="close" type="button" class="btn btn-secondary"
                                             data-bs-dismiss="modal">Close</button>
-                                        <!-- <button type="button" class="btn btn-primary">Understood</button> -->
                                         <input type="submit" class="btn btn-primary" value="Save">
                                     </div>
-                                </form>
+                                    </form>
                                 </div>
                             </div>
                         </div>

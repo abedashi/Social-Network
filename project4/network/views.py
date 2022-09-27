@@ -4,6 +4,12 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django.contrib import messages
+from django.core.paginator import Paginator
+from django.db.models import Exists, OuterRef, F,  Count
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
 
 from .models import User, Follows, Posts, Comments, Likes
 
@@ -19,15 +25,33 @@ def index(request):
         
         # Insert new post to Posts
         addPost = Posts.objects.create(
-            userID = request.user,
-            post = post
+            user = request.user,
+            text = post
         )
         addPost.save()
         messages.success(request, "Post Added Successfully")
         return HttpResponseRedirect(reverse("index"))
-    return render(request, "network/index.html", {
-            "posts": Posts.objects.all().order_by("datetime")[::-1]
+
+    if request.user.is_authenticated:
+        posts = Posts.objects.annotate(
+            is_liked=Exists(
+                Likes.objects.filter(user=request.user, post=OuterRef('id'))
+            )
+        ).select_related('user').order_by("datetime")[::-1]
+
+        paginator = Paginator(posts, 10)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        
+        return render(request, "network/index.html", {
+            'page_obj': page_obj
         })
+
+    posts = Posts.objects.all().order_by("datetime")[::-1]
+    paginator = Paginator(posts, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    return render(request, "network/index.html", {'page_obj': page_obj})
 
 
 def login_view(request):
@@ -81,15 +105,81 @@ def register(request):
         return render(request, "network/register.html")
 
 def profile(request):
-    return render(request, "network/profile.html", {
-        "myPost": Posts.objects.filter(userID=request.user).order_by("datetime")[::-1]
-    })
+    contact_list = Posts.objects.filter(user=request.user).annotate(
+        is_liked=Exists(
+            Likes.objects.filter(user=request.user, post=OuterRef('pk'))
+        )).select_related('user').order_by("datetime")[::-1]
+    paginator = Paginator(contact_list, 3)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    return render(request, "network/profile.html", {'page_obj': page_obj})
 
 def following(request):
-    # posts = Posts.objects.filter(
-    #     posts__user__follower__in = Follows.objects.filter(follower=request.user)
-    # ).select_related('posts')
-    return render(request, "network/following.html", {
-        # "myFollowers": "posts"
-        # "myFollowers": Posts.objects.filter(followID=Follows.objects.filter(follower=request.user)).select_related('followID')
-    })
+    posts = Posts.objects.filter(
+        user__followers__in = Follows.objects.filter(follower = request.user)
+    ).annotate(
+        is_liked=Exists(
+            Likes.objects.filter(
+                user=request.user, post=OuterRef('pk')
+            )
+        )
+    ).select_related('user')
+
+    paginator = Paginator(posts, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    return render(request, "network/following.html", {'page_obj': page_obj})
+
+def like(request, post_id):
+    if not request.user.is_authenticated:
+        return HttpResponse(status=401)
+    Likes.objects.create(
+        post = Posts.objects.get(id=post_id),
+        user = request.user
+    )
+    return HttpResponse(status=204)
+
+def unlike(request, post_id):
+    if not request.user.is_authenticated:
+        return HttpResponse(status=401)
+    Likes.objects.get(
+        post = Posts.objects.get(id=post_id),
+        user = request.user
+    ).delete()
+    return HttpResponse(status=204)
+
+def post_view(request, post_id):
+    # if(request.method == 'POST'):
+    #     comment = request.POST["comment"]
+    #     Comments.objects.create(
+    #         entity = Entity.objects.create(
+    #             user = request.user,
+    #             text = comment
+    #         ),
+    #         post = Post.objects.get(entity_id=entity_id)
+    #     )
+    #     return redirect('post', entity_id)
+
+    post = Posts.objects.get(post=post_id)
+    comments = Comments.objects.filter(post=post)
+    
+    context = {}
+    if request.user.is_authenticated:
+        try:
+            is_liked = Exists(Likes.objects.get(post=post_id, user=request.user))
+        except:
+            is_liked = False
+
+        context["is_liked"] = is_liked
+
+        comments = comments.annotate(
+            is_liked = Exists(
+                    Likes.objects.filter(user=request.user)
+                )
+        )
+    context.update({
+            "post": post
+            # "comments": comments
+        })
+        
+    return render(request, "network/post.html", context)

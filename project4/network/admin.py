@@ -2,19 +2,19 @@ from django.contrib import admin
 from .models import User, Follows, Posts, Likes, Comments
 
 class UserAdmin(admin.ModelAdmin):
-    list_display = ("id", "username", "number_of_post", "number_of_followers", "number_of_following")
+    list_display = ("id", "username")
 
 class FollowsAdmin(admin.ModelAdmin):
     list_display = ("id", "follower", "following")
 
 class PostsAdmin(admin.ModelAdmin):
-    list_display = ("id", "userID", "post", "datetime", "likes")
+    list_display = ("id", "user", "text", "datetime")
 
 class CommentAdmin(admin.ModelAdmin):
-    list_display = ("id", "userID", "postID", "comment")
+    list_display = ("id", "user", "post", "comment")
 
 class LikesAdmin(admin.ModelAdmin):
-    list_display = ("id", "userID", "postID", "is_liked")
+    list_display = ("id", "user", "post")
 
 # Register your models here.
 admin.site.register(User, UserAdmin)

@@ -1,0 +1,74 @@
+{% load static %}
+
+{% for post in page_obj %}
+<div class="container-fluid border mt-2" data-id="{{ post.id }}">
+    <div class="row pt-3">
+        <div class="col">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <a href="#">
+                        <h5>{{ post.user }}</h5>
+                    </a>
+                </div>
+                <div style="color: rgb(147, 146, 146);">
+                    {{ post.datetime }}
+                </div>
+            </div>
+            <p>{{ post.text }}</p>
+
+            <hr />
+            <div class="d-flex align-items-center justify-content-center mb-2">
+                <span>
+                    {% if not post.is_liked %}
+                    <i id="heart-icon" data-action="like" class="bi bi-heart"></i>
+                    {% else %}
+                    <i id="heart-icon" data-action="unlike" class="bi bi-heart-fill text-danger"></i>
+                    {% endif %}
+                </span>
+                <div style="padding-left: 3px;">{{post.postLiked.count}}</div>
+                <a style="margin-left: 55px;" href="#">Comment</a>
+                <a style="margin-left: 55px;" type="button" data-bs-toggle="modal"
+                    data-bs-target="#exampleModal">Edit</a>
+
+                <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel"
+                    aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+                                <!-- <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button> -->
+                            </div>
+                            <div class="modal-body">
+                                <textarea class="form-control" rows="5"></textarea>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary">Save changes</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="pagination container">
+    <hr />
+    <span class="step-links">
+        {% if page_obj.has_previous %}
+        <a href="?page=1">&laquo; first</a>
+        <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        </span>
+
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}">next</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+    </span>
+</div>
+{% endfor %}
