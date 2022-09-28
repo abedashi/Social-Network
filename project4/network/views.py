@@ -109,10 +109,23 @@ def profile(request):
         is_liked=Exists(
             Likes.objects.filter(user=request.user, post=OuterRef('pk'))
         )).select_related('user').order_by("datetime")[::-1]
+
+    followers = Follows.objects.filter(
+        following_id=request.user,
+    ).count()
+    following = Follows.objects.filter(
+        follower_id=request.user
+    ).count()
+        
     paginator = Paginator(contact_list, 3)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    return render(request, "network/profile.html", {'page_obj': page_obj})
+    return render(request, "network/profile.html", {
+        "profile": User.objects.get(pk=request.user.id),
+        "page_obj": page_obj,
+        "followers": followers,
+        "following": following
+    })
 
 def following(request):
     posts = Posts.objects.filter(
@@ -183,3 +196,49 @@ def post_view(request, post_id):
         })
         
     return render(request, "network/post.html", context)
+
+def profile_view(request, user_id):
+    if request.user.is_authenticated:
+        posts = Posts.objects.filter(user=user_id).annotate(
+            is_liked=Exists(
+                Likes.objects.filter(user=user_id, post=OuterRef('pk'))
+            )).select_related('user').order_by("datetime")[::-1]
+
+        is_followed = Follows.objects.filter(
+            follower=request.user,
+            following=user_id
+        ).exists()
+
+        followers = Follows.objects.filter(
+            following_id=user_id,
+        ).count()
+        following = Follows.objects.filter(
+            follower_id=user_id
+        ).count()
+
+        paginator = Paginator(posts, 3)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        return render(request, "network/profile.html", {
+            "profile" : User.objects.get(pk=user_id),
+            "page_obj": page_obj,
+            "is_followed": is_followed,
+            "followers" : followers,
+            "following" : following
+        })
+    return HttpResponseRedirect(reverse("login"))
+
+def follow(request, user_id):
+    Follows.objects.create(follower=request.user, following_id=user_id)
+    return HttpResponseRedirect(reverse("profileView"), kwargs={'user_id':user_id})
+
+def unfollow(request, user_id):
+    Follows.objects.get(follower=request.user, following_id=user_id).delete()
+    return HttpResponseRedirect(reverse("profileView"), kwargs={'user_id':user_id})
+
+def deletePost(request, post_id):
+    try:
+        Posts.objects.get(pk=post_id).delete()
+    except:
+        return HttpResponse(status=502)
+    return HttpResponse(status=200)

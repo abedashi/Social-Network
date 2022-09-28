@@ -4,9 +4,8 @@ from django.db import models
 
 
 class User(AbstractUser):
-    pass
-    # backgroundColor = models.TextField(default="rgb(203, 68, 74)")
-    # image = models.ImageField(null=True, default="/images/profile.png", upload_to="/images")
+    backgroundColor = models.TextField(default="rgb(203, 68, 74)")
+    image = models.ImageField(null=True, default="profile.png", upload_to="images")
 
 class Follows(models.Model):
     follower = models.ForeignKey(User, on_delete=models.CASCADE, null=True, related_name="following")

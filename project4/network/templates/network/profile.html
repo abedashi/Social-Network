@@ -6,18 +6,48 @@
         <div class="row p-5">
             <div class="col d-flex align-items-center">
                 <div style="margin-bottom: -90px;">
+                    {% if request.user != profile.id %}
                     <img src="static/network/images/profile.png" alt="img" width="200" height="200"
                         style="background-color: white;">
+                    {% else %}
+                    <img src="static/network/{{ profile.image }}" alt="img" width="200" height="200"
+                        style="background-color: white;">
+                    {% endif %}
                 </div>
+            </div>
+            <div>
+                {% if user.id != profile.id %}
+                    {% if not is_followed %}
+                    <a href="{% url 'follow' profile.id %}" class="text-light">
+                        <button type="button" class="btn btn-outline-light">
+                        <i class="bi bi-person-plus"></i>
+                        Follow
+                        </button>
+                    </a>
+                    {% else %}
+                    <a href="{% url 'unfollow' profile.id %}" class="text-light">
+                        <button type="button" class="btn btn-outline-light">
+                        <i class="bi bi-person-dash"></i>
+                        Unfollow
+                        </button>
+                    </a>
+                    {% endif %}
+                {% endif%}
             </div>
         </div>
     </div>
     <div class="container mt-5">
         <div class="row">
             <div class="col">
+                {% if request.user != profile %} 
+                <div>
+                    <h4>{{ profile.username }}</h4>
+                </div>
+                {% else %}
                 <div>
                     <h4>{{ user.username }}</h4>
                 </div>
+                {% endif %}
 
                 <div>
                     <ul class="nav nav-tabs">
@@ -33,86 +63,13 @@
                 </div>
 
                 <div id="my-post">
-                    {% if not page_obj %}
-                    <div class="text-center mt-3">
-                        No Posts Yet!
-                    </div>
-                    {% endif %}
-                    {% for post in page_obj %}
-                    <div class="container-fluid border mt-2" data-id="{{ post.id }}">
-                        <div class="row pt-3">
-                            <div class="col">
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <div>
-                                        <a href="#">
-                                            <h5>{{ post.user }}</h5>
-                                        </a>
-                                    </div>
-                                    <div style="color: rgb(147, 146, 146);">
-                                        {{ post.datetime }}
-                                    </div>
-                                </div>
-                                <p>{{ post.text }}</p>
-
-                                <hr />
-                                <div class="d-flex align-items-center justify-content-center mb-2">
-                                    <span>
-                                        {% if not post.is_liked %}
-                                            <i id="heart-icon" data-action="like" class="bi bi-heart"></i>
-                                        {% else %}
-                                            <i id="heart-icon" data-action="unlike" class="bi bi-heart-fill text-danger"></i>
-                                        {% endif %}
-                                    </span>
-                                    <div style="padding-left: 3px;">{{post.postLiked.count}}</div>
-                                    <a style="margin-left: 55px;" href="#">Comment</a>
-                                    <a style="margin-left: 55px;" type="button" data-bs-toggle="modal" data-bs-target="#exampleModal">Edit</a>
-
-                                    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                                        <div class="modal-dialog">
-                                          <div class="modal-content">
-                                            <div class="modal-header">
-                                              <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
-                                              <!-- <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button> -->
-                                            </div>
-                                            <div class="modal-body">
-                                              <textarea class="form-control" rows="5"></textarea>
-                                            </div>
-                                            <div class="modal-footer">
-                                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                              <button type="button" class="btn btn-primary">Save changes</button>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                    <!-- <hr /> -->
-                    <div class="pagination container">
-                        <hr />
-                        <span class="step-links">
-                            {% if page_obj.has_previous %}
-                            <a href="?page=1">&laquo; first</a>
-                            <a href="?page={{ page_obj.previous_page_number }}">previous</a>
-                            {% endif %}
-
-                            <span class="current">
-                                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
-                            </span>
-
-                            {% if page_obj.has_next %}
-                            <a href="?page={{ page_obj.next_page_number }}">next</a>
-                            <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
-                            {% endif %}
-                        </span>
-                    </div>
+                    {% include "network/posts.html" %}
                 </div>
+                
                 <div id="about" class="p-4" hidden>
                     <div class="d-flex align-items-center justify-content-between">
                         <div class="d-flex aligin-items-center" style="gap: 15px;">
-                            <span><strong>Folowers:</strong> 514</span> <span><strong>Following:</strong> 212</span>
+                            <span><strong>Folowers:</strong> {% if request.user != followers %} {{followers}} {% endif %}</span> <span><strong>Following:</strong> {{following}}</span>
                         </div>
 
                         <!-- Button trigger modal -->
@@ -168,11 +125,11 @@
                     </div>
                     <br />
                     <div class="d-flex align-items-center mb-3" style="gap: 99px;">
-                        <strong>Email: </strong> <span>{{ user.email }}</span>
+                        <strong>Email: </strong> <span>{% if request.user != profile.id %} {{profile.email}} {% else %} {{ user.email }} {% endif %}</span>
                     </div>
 
                     <div class="d-flex align-items-center mb-3" style="gap: 30px;">
-                        <strong>Profile Picture: </strong> <span>pexels-jeandaniel-francoeur-12787798.jpg</span>
+                        <strong>Profile Picture: </strong> <span>{{ profile.image }}</span>
                     </div>
 
                     <div class="d-flex align-items-center mb-3" style="gap: 116px;">

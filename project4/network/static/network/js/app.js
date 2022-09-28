@@ -1,58 +1,3 @@
-// const navAbout = document.querySelector('#about-btn');
-// const navPosts = document.querySelector('#my-post');
-// const containerPosts = document.querySelector('#my-post');
-// const containerAbout = document.querySelector('#about');
-// document.querySelector('#profile-tabs').addEventListener('click', (event) => {
-//     event.preventDefault();
-//     target = event.target;
-//     if (target.tagName != 'A') {
-//         return;
-//     } else {
-//         if (target === navPosts) {
-//             if (navPosts.classList.contains('active')) return;
-//             navPosts.classList.add('active');
-//             navAbout.classList.remove('active');
-//             if (navEdit) navEdit.classList.remove('active');
-//             containerPosts.hidden = false;
-//             containerAbout.hidden = true;
-//             if (containerEdit) containerEdit.hidden = true;
-//         } else if (target === navAbout) {
-//             if (navAbout.classList.contains('active')) return;
-//             navAbout.classList.add('active');
-//             navPosts.classList.remove('active');
-//             if (navEdit) navEdit.classList.remove('active');
-//             containerPosts.hidden = true;
-//             containerAbout.hidden = false;
-//             if (containerEdit) containerEdit.hidden = true;
-//   } else if (target === navEdit) {
-//     navAbout.classList.remove('active');
-//     navPosts.classList.remove('active');
-//     navEdit.classList.add('active');
-//     containerPosts.hidden = true;
-//     containerAbout.hidden = true;
-//     containerEdit.hidden = false;
-// }
-// }
-// });
-// document.querySelector('#my-post').style.display = 'block';
-// document.querySelector('#about').style.display = 'none';
-
-// document.querySelector('#about-btn').style.backgroundColor = 'white';
-// document.querySelector('#my-post-btn').style.backgroundColor = 'rgb(239, 239, 239)';
-
-// document.querySelector('#my-post-btn').addEventListener('click', () => {
-//     document.querySelector('#my-post-btn').style.backgroundColor = 'rgb(239, 239, 239)';
-//     document.querySelector('#about-btn').style.backgroundColor = 'white';
-//     document.querySelector('#my-post').style.display = 'block';
-//     document.querySelector('#about').style.display = 'none';
-// });
-// document.querySelector('#about-btn').addEventListener('click', () => {
-//     document.querySelector('#my-post-btn').style.backgroundColor = 'white';
-//     document.querySelector('#about-btn').style.backgroundColor = 'rgb(239, 239, 239)';
-//     document.querySelector('#my-post').style.display = 'none';
-//     document.querySelector('#about').style.display = 'block';
-// });
-
 // document.querySelector('#edit').addEventListener('submit', (e) => {
 //     const email = document.querySelector('#email');
 //     const emailFeedback = document.querySelector('#email-feedback');
@@ -271,3 +216,27 @@ aboutBtn.addEventListener('click', () => {
     postContainer.hidden = true;
     aboutContainer.hidden = false;
 })
+
+const deletPost = (del) => {
+    let postID = del.closest('div[data-id]').dataset.id;
+    
+}
+
+const deletePost = (el, event) => {
+    event.stopPropagation();
+  
+    let postId = el.closest('.entity').dataset.id;
+    const animation = el.closest('.entity').dataset.animation;
+    fetch(`/delete_post/${postId}`).then((response) => {
+      if (
+        response.status === 200 &&
+        el.closest('.entity').dataset.animation === undefined
+      )
+        window.location.replace('/');
+      else {
+        let post = el.closest('.entity');
+        post.remove();
+      }
+    });
+  };
+  
