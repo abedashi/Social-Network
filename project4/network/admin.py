@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import User, Follows, Posts, Likes, Comments
 
 class UserAdmin(admin.ModelAdmin):
-    list_display = ("id", "username", "image")
+    list_display = ("id", "username", "image", "backgroundColor", "email", "bio")
 
 class FollowsAdmin(admin.ModelAdmin):
     list_display = ("id", "follower", "following")

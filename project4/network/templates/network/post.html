@@ -1,0 +1,72 @@
+{% extends "network/layout.html" %}
+
+{% block body %}
+<div class="container">
+    <div class="container border mt-2" data-animation data-id="{{ post.id }}">
+        <div class="row pt-3">
+            <div class="col">
+                
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        {% if user.is_authenticated %}
+                        <a>
+                            <h5>{{ post.user }}</h5>
+                        </a>
+                        {% else %}
+                        <a>
+                            <h5>{{ post.user }}</h5>
+                        </a>
+                        {% endif %}
+                    </div>
+                    <div style="color: rgb(147, 146, 146);">
+                        {{ post.datetime }}
+                    </div>
+                </div>
+                <p>{{ post.text }}</p>
+
+                <hr />
+                <div class="d-flex align-items-center justify-content-center mb-2">
+                    <span>
+                        {% if not is_liked %}
+                        <i id="heart-icon" data-action="like" class="bi bi-heart"></i>
+                        {% else %}
+                        <i id="heart-icon" data-action="unlike" class="bi bi-heart-fill text-danger"></i>
+                        {% endif %}
+                    </span>
+                    <div style="padding-left: 3px;">{{post.postLiked.count}}</div>
+                    <a style="margin-left: 55px;" href="#">Comment</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- <div class="m-3"> -->
+    {% if user.is_authenticated %}
+    <form action="{% url 'postView' post.id %}" method="post">
+        {% csrf_token %}
+        <div class="d-flex align-items-center mt-3">
+            <input type="text" name="comment" class="form-control" placeholder="Add a Comment" autocomplete="off">
+            <input type="submit" class="btn btn-primary" value="Comment">
+        </div>
+    </form>
+    {% endif %}
+    <!-- </div> -->
+    <hr />
+
+    {% for comment in comments %}
+    <div class="border p-3 mb-2">
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <h5>{{ comment.user }}</h5>
+            </div>
+            <div>
+                {{ comment.datetime }}
+            </div>
+        </div>
+        <div>
+            {{ comment.comment }}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

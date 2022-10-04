@@ -1,62 +1,3 @@
-// document.querySelector('#edit').addEventListener('submit', (e) => {
-//     const email = document.querySelector('#email');
-//     const emailFeedback = document.querySelector('#email-feedback');
-//     document.querySelector('#close').addEventListener('click', () => {
-//         email.classList.remove("is-invalid", "is-valid");
-//         email.value = "";
-//         emailFeedback.classList.remove("invalid-feedback", "valid-feedback");
-//         bio.classList.remove("is-invalid", "is-valid");
-//         bio.value = "";
-//         bioFeedback.classList.remove("invalid-feedback", "valid-feedback");
-//     })
-
-//     document.querySelector('#reset').addEventListener('click', () => {
-//         email.classList.remove("is-invalid", "is-valid");
-//         email.value = "";
-//         emailFeedback.classList.remove("invalid-feedback", "valid-feedback");
-//         bio.classList.remove("is-invalid", "is-valid");
-//         bio.value = "";
-//         bioFeedback.classList.remove("invalid-feedback", "valid-feedback");
-//     })
-
-//     const bio = document.querySelector('#floatingTextarea');
-//     const bioFeedback = document.querySelector('#textarea-feedback');
-//     if (email.value.length <= 0 && bio.value.length <= 0) {
-//         e.preventDefault();
-//         email.classList.add("is-invalid");
-//         emailFeedback.classList.add("invalid-feedback");
-
-//         bio.classList.add("is-invalid");
-//         bioFeedback.classList.add("invalid-feedback");
-//     } else if (email.value.length <= 0 || bio.value.length <= 0) {
-//         if (email.value.length <= 0) {
-//             e.preventDefault();
-//             email.classList.add("is-invalid");
-//             emailFeedback.classList.add("invalid-feedback");
-//         } else {
-//             email.classList.add("is-valid");
-//             emailFeedback.classList.add("valid-feedback");
-//         }
-
-//         if (bio.value.length <= 0) {
-//             e.preventDefault();
-//             bio.classList.add("is-invalid");
-//             bioFeedback.classList.add("invalid-feedback");
-//         } else {
-//             bio.classList.add("is-valid");
-//             bioFeedback.classList.add("valid-feedback");
-//         }
-
-//     } else if (email.value.length > 0 && bio.value.length > 0) {
-//         email.classList.add("is-valid");
-//         emailFeedback.classList.add("valid-feedback");
-
-//         bio.classList.add("is-valid");
-//         bioFeedback.classList.add("valid-feedback");
-//     }
-// })
-// })
-
 // function profile() {
 // e.stopPropagation();
 // console.log('shi')
@@ -138,7 +79,36 @@
 // })
 // }
 
-// console.log("hii")
+// const e = document.querySelector('#postEdit');
+// const t = e.closest('.d-flex').nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling;
+// const s = t.querySelector('#text').value
+// console.log(s);
+
+// document.querySelectorAll('#postEdit').forEach(el => {
+//     el.addEventListener('submit', () => {
+//         fetch(`/edit_post/${postId}`, {
+//             method: 'PUT',
+//             body: JSON.stringify({
+//                 new_post: postText,
+//             }),
+//         })
+//     })
+// })
+
+// Delete Post
+document.querySelectorAll('#down').forEach(el => {
+    el.addEventListener('click', () => {
+        let postId = el.closest('div[data-id]').dataset.id;
+        fetch(`/delete/${postId}`).then((response) => {
+            if (response.status === 200) {
+                let post = el.closest('div[data-id]');
+                post.remove();
+            }
+        })
+    })
+})
+
+// Like on posts
 document.querySelectorAll('#heart-icon').forEach(i => {
     i.addEventListener('click', () => {
         const postID = i.closest('div[data-id]').dataset.id;
@@ -167,76 +137,42 @@ document.querySelectorAll('#heart-icon').forEach(i => {
     })
 });
 
-// const likePost = (i) => {
-//     const postID = i.closest('div[data-id]').dataset.id;
-//     const action = i.dataset.action;
-//     const icon = i.children[0];
-//     const count = i.children[1];
-//     console.log(postID);
-//     console.log(action)
-//     console.log(icon);
-//     console.log(count);
-//     // const count = i.children[1];
-//     fetch(`/post/${action}/${postID}`).then((res) => {
-//         if (res.status == 401) {
-//             window.location.replace('/login');
-//         } else if (res.status == 204) {
-//             if (i.dataset.action === 'like') {
-//                 i.dataset.action = 'unlike';
-//                 icon.classList.replace('bi-heart', 'bi-heart-fill');
-//                 icon.classList.add('text-danger');
-//                 count.innerText = parseInt(count.innerText) + 1;
-//             } else {
-//                 i.dataset.action = 'like';
-//                 icon.classList.replace('bi-heart-fill', 'bi-heart');
-//                 icon.classList.remove('text-danger');
-//                 count.innerText = parseInt(count.innerText) - 1;
-//             }
-//         }
-//     })
-// };
-
-// document.querySelectorAll('#heart-icon').forEach(i => {
-//     i.addEventListener('click', likePost)
-// })
-
+// Profile Single page
+const editContainer = document.querySelector('#edit-profile')
 const postContainer = document.querySelector('#my-post');
 const aboutContainer = document.querySelector('#about');
 const postBtn = document.querySelector('#my-post-btn');
 const aboutBtn = document.querySelector('#about-btn');
-postBtn.addEventListener('click', () => {
+const editBtn = document.querySelector('#edit-btn');
+postBtn.addEventListener('click', (e) => {
     postBtn.classList.add('active');
     aboutBtn.classList.remove('active');
-    aboutContainer.hidden = true;
+    if (editBtn) editBtn.classList.remove('active');
     postContainer.hidden = false;
+    aboutContainer.hidden = true;
+    if (editContainer) editContainer.hidden = true;
 });
 aboutBtn.addEventListener('click', () => {
-    postBtn.classList.remove('active');
     aboutBtn.classList.add('active');
-    postContainer.hidden = true;
+    postBtn.classList.remove('active');
+    if (editBtn) editBtn.classList.remove('active');
     aboutContainer.hidden = false;
+    postContainer.hidden = true;
+    if(editContainer) editContainer.hidden = true;
+});
+editBtn.addEventListener('click', () => {
+    editBtn.classList.add('active');
+    postBtn.classList.remove('active');
+    aboutBtn.classList.remove('active');
+    editContainer.hidden = false;
+    postContainer.hidden = true;
+    aboutContainer.hidden = true;
 })
 
-const deletPost = (del) => {
-    let postID = del.closest('div[data-id]').dataset.id;
-    
-}
 
-const deletePost = (el, event) => {
-    event.stopPropagation();
-  
-    let postId = el.closest('.entity').dataset.id;
-    const animation = el.closest('.entity').dataset.animation;
-    fetch(`/delete_post/${postId}`).then((response) => {
-      if (
-        response.status === 200 &&
-        el.closest('.entity').dataset.animation === undefined
-      )
-        window.location.replace('/');
-      else {
-        let post = el.closest('.entity');
-        post.remove();
-      }
-    });
-  };
-  
+// Profile change cover color
+const cover = document.querySelector('#cover');
+const color = document.querySelector('input[type="color"]');
+color.addEventListener('input', (event) => {
+    cover.style.backgroundColor = event.srcElement.value;
+});

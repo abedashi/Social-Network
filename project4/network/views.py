@@ -11,7 +11,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 
-from .models import User, Follows, Posts, Comments, Likes
+from .models import *
 
 def index(request):
     if request.method == "POST":
@@ -104,27 +104,36 @@ def register(request):
     else:
         return render(request, "network/register.html")
 
-def profile(request):
-    contact_list = Posts.objects.filter(user=request.user).annotate(
+def profile(request, user_id):
+    contact_list = Posts.objects.filter(user=user_id).annotate(
         is_liked=Exists(
-            Likes.objects.filter(user=request.user, post=OuterRef('pk'))
+            Likes.objects.filter(user=user_id, post=OuterRef('pk'))
         )).select_related('user').order_by("datetime")[::-1]
 
+    is_followed = Follows.objects.filter(
+        follower=request.user,
+        following=user_id
+    ).exists()
+
     followers = Follows.objects.filter(
-        following_id=request.user,
+        following_id=user_id,
     ).count()
     following = Follows.objects.filter(
-        follower_id=request.user
+        follower_id=user_id
     ).count()
-        
+    user = User.objects.get(pk=user_id)
+    cover = "style=background-color:{}".format(user.backgroundColor)
+
     paginator = Paginator(contact_list, 3)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     return render(request, "network/profile.html", {
-        "profile": User.objects.get(pk=request.user.id),
+        "profile": user,
         "page_obj": page_obj,
+        "is_followed": is_followed,
         "followers": followers,
-        "following": following
+        "following": following,
+        "cover": cover
     })
 
 def following(request):
@@ -136,7 +145,7 @@ def following(request):
                 user=request.user, post=OuterRef('pk')
             )
         )
-    ).select_related('user')
+    ).select_related('user').order_by("datetime")[::-1]
 
     paginator = Paginator(posts, 10)
     page_number = request.GET.get('page')
@@ -161,80 +170,13 @@ def unlike(request, post_id):
     ).delete()
     return HttpResponse(status=204)
 
-def post_view(request, post_id):
-    # if(request.method == 'POST'):
-    #     comment = request.POST["comment"]
-    #     Comments.objects.create(
-    #         entity = Entity.objects.create(
-    #             user = request.user,
-    #             text = comment
-    #         ),
-    #         post = Post.objects.get(entity_id=entity_id)
-    #     )
-    #     return redirect('post', entity_id)
-
-    post = Posts.objects.get(post=post_id)
-    comments = Comments.objects.filter(post=post)
-    
-    context = {}
-    if request.user.is_authenticated:
-        try:
-            is_liked = Exists(Likes.objects.get(post=post_id, user=request.user))
-        except:
-            is_liked = False
-
-        context["is_liked"] = is_liked
-
-        comments = comments.annotate(
-            is_liked = Exists(
-                    Likes.objects.filter(user=request.user)
-                )
-        )
-    context.update({
-            "post": post
-            # "comments": comments
-        })
-        
-    return render(request, "network/post.html", context)
-
-def profile_view(request, user_id):
-    if request.user.is_authenticated:
-        posts = Posts.objects.filter(user=user_id).annotate(
-            is_liked=Exists(
-                Likes.objects.filter(user=user_id, post=OuterRef('pk'))
-            )).select_related('user').order_by("datetime")[::-1]
-
-        is_followed = Follows.objects.filter(
-            follower=request.user,
-            following=user_id
-        ).exists()
-
-        followers = Follows.objects.filter(
-            following_id=user_id,
-        ).count()
-        following = Follows.objects.filter(
-            follower_id=user_id
-        ).count()
-
-        paginator = Paginator(posts, 3)
-        page_number = request.GET.get('page')
-        page_obj = paginator.get_page(page_number)
-        return render(request, "network/profile.html", {
-            "profile" : User.objects.get(pk=user_id),
-            "page_obj": page_obj,
-            "is_followed": is_followed,
-            "followers" : followers,
-            "following" : following
-        })
-    return HttpResponseRedirect(reverse("login"))
-
 def follow(request, user_id):
     Follows.objects.create(follower=request.user, following_id=user_id)
-    return HttpResponseRedirect(reverse("profileView"), kwargs={'user_id':user_id})
+    return HttpResponseRedirect(reverse("profile", kwargs={'user_id':user_id}))
 
 def unfollow(request, user_id):
     Follows.objects.get(follower=request.user, following_id=user_id).delete()
-    return HttpResponseRedirect(reverse("profileView"), kwargs={'user_id':user_id})
+    return HttpResponseRedirect(reverse("profile", kwargs={'user_id':user_id}))
 
 def deletePost(request, post_id):
     try:
@@ -242,3 +184,80 @@ def deletePost(request, post_id):
     except:
         return HttpResponse(status=502)
     return HttpResponse(status=200)
+
+def post_view(request, post_id):
+    if request.method == "POST":
+        comment = request.POST["comment"]
+        Comments.objects.create(
+            user=request.user,
+            post=Posts.objects.get(pk=post_id),
+            comment=comment
+        )
+        return HttpResponseRedirect(reverse("postView", kwargs={'post_id': post_id}))
+
+    post = Posts.objects.get(pk=post_id)
+    try:
+        is_liked = Exists(Likes.objects.get(post=post_id, user=request.user))
+    except:
+        is_liked = False
+    
+    comments = Comments.objects.filter(post=post_id).order_by("datetime")[::-1]
+    return render(request, "network/post.html", {
+        "post": post,
+        "is_liked": is_liked,
+        "comments": comments
+    })
+
+@csrf_exempt
+def edit(request, post_id):
+    post = Posts.objects.get(pk=post_id);
+    data = json.loads(request.body)
+    if data.get("new_post") is not None:
+        post.text = data["new_post"]
+    post.save()
+    return HttpResponse(status=204)
+
+def edit_profile(request, user_id):
+    if request.method == "POST":
+        email = request.POST["mail"]
+        bio = request.POST["bio"]
+        color = request.POST["color"]
+        file = request.POST["file"]
+
+        user = User.objects.get(pk=user_id)
+        user.backgroundColor = color
+        if not email and not bio and not file:
+            user.save()
+            return HttpResponseRedirect(reverse("profile", kwargs={"user_id": user_id}))
+        if not email and not bio:
+            user.image = file
+            user.save()
+            return HttpResponseRedirect(reverse("profile", kwargs={"user_id": user_id}))
+        if not bio and file:
+            user.email = email
+            user.save()
+            return HttpResponseRedirect(reverse("profile", kwargs={"user_id": user_id}))
+        if not email and not file:
+            user.bio = bio
+            user.save()
+            return HttpResponseRedirect(reverse("profile", kwargs={"user_id": user_id}))
+        if not email:
+            user.bio = bio
+            user.image = file
+            user.save()
+            return HttpResponseRedirect(reverse("profile", kwargs={"user_id": user_id}))
+        if not bio:
+            user.email = email
+            user.image = file
+            user.save()
+            return HttpResponseRedirect(reverse("profile", kwargs={"user_id": user_id}))
+        if not file:
+            user.email = email
+            user.save()
+            return HttpResponseRedirect(reverse("profile", kwargs={"user_id": user_id}))
+
+        user.email = email
+        user.bio = bio
+        user.image = file
+        user.save()
+        return HttpResponseRedirect(reverse("profile", kwargs={"user_id": user_id}))

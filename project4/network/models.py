@@ -4,8 +4,9 @@ from django.db import models
 
 
 class User(AbstractUser):
-    backgroundColor = models.TextField(default="rgb(203, 68, 74)")
-    image = models.ImageField(null=True, default="profile.png", upload_to="images")
+    backgroundColor = models.TextField(default="#cb444a")
+    bio = models.TextField(default="No Bio")
+    image = models.ImageField(null=True, default="profile.png", upload_to="media/")
 
 class Follows(models.Model):
     follower = models.ForeignKey(User, on_delete=models.CASCADE, null=True, related_name="following")
@@ -27,6 +28,7 @@ class Comments(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
     post = models.ForeignKey(Posts, on_delete=models.CASCADE, null=True)
     comment = models.CharField(max_length=1000)
+    datetime = models.DateTimeField(default=datetime.now())
 
     def __str__(self):
         return f"({self.user}, {self.post}, {self.comment})"
