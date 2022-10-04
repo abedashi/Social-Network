@@ -5,7 +5,7 @@
     <div class="container border mt-2" data-animation data-id="{{ post.id }}">
         <div class="row pt-3">
             <div class="col">
-                
+
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
                         {% if user.is_authenticated %}
@@ -53,6 +53,11 @@
     <!-- </div> -->
     <hr />
 
+    {% if not comments %}
+    <div class="text-center mt-3">
+        No Comments Yet!
+    </div>
+    {% endif %}
     {% for comment in comments %}
     <div class="border p-3 mb-2">
         <div class="d-flex align-items-center justify-content-between">

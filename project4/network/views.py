@@ -209,8 +209,8 @@ def post_view(request, post_id):
     })
 
 @csrf_exempt
-def edit(request, post_id):
-    post = Posts.objects.get(pk=post_id);
+def edit_post(request, post_id):
+    post = Posts.objects.get(pk=post_id)
     data = json.loads(request.body)
     if data.get("new_post") is not None:
         post.text = data["new_post"]

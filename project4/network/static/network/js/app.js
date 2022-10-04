@@ -78,22 +78,60 @@
 //     }
 // })
 // }
+// let post = document.querySelector('#test').nextElementSibling;
+//     let postText = post.innerText;
+//     console.log(postText)
 
-// const e = document.querySelector('#postEdit');
-// const t = e.closest('.d-flex').nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling;
-// const s = t.querySelector('#text').value
-// console.log(s);
+// Edit Post
+let editing = false
+const editPost = (el, event) => {
+    event.stopPropagation()
+    if (editing) {
+        let dropdown = el.closest('.dropdown').children[0];
+        dropdown = bootstrap.Dropdown.getInstance(dropdown);
+        dropdown.hide();
+        return;
+    }
+    
+    editing = true;
+    let dropdown = el.closest('.dropdown').children[0];
+    dropdown = bootstrap.Dropdown.getInstance(dropdown);
+    dropdown.hide();
+    let post = el.closest('#post').nextElementSibling.nextElementSibling;
+    let postText = post.innerText;
+    
+    const textarea = document.createElement('textarea');
+    textarea.classList.add('form-control', 'my-2');
+    textarea.value = postText;
+    post.replaceWith(textarea);
 
-// document.querySelectorAll('#postEdit').forEach(el => {
-//     el.addEventListener('submit', () => {
-//         fetch(`/edit_post/${postId}`, {
-//             method: 'PUT',
-//             body: JSON.stringify({
-//                 new_post: postText,
-//             }),
-//         })
-//     })
-// })
+    const save = document.createElement('button');
+    save.classList.add('btn', 'btn-primary', 'mb-2');
+    save.innerText = 'Edit';
+    textarea.insertAdjacentElement('afterend', save);
+
+    save.onclick = (event) => {
+        event.stopPropagation();
+        postText = textarea.value;
+
+        let postId = el.closest('div[data-id]').dataset.id;
+
+        fetch(`/edit_post/${postId}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+                new_post: postText,
+            }),
+        }).then((res) => {
+            if (res.status === 204) {
+                post.innerText = postText;
+                textarea.replaceWith(post);
+                save.remove();
+                editing = false;
+            }
+        });
+    };
+};
+
 
 // Delete Post
 document.querySelectorAll('#down').forEach(el => {
@@ -158,7 +196,7 @@ aboutBtn.addEventListener('click', () => {
     if (editBtn) editBtn.classList.remove('active');
     aboutContainer.hidden = false;
     postContainer.hidden = true;
-    if(editContainer) editContainer.hidden = true;
+    if (editContainer) editContainer.hidden = true;
 });
 editBtn.addEventListener('click', () => {
     editBtn.classList.add('active');
